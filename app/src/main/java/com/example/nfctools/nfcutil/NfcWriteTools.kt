@@ -16,6 +16,7 @@ import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
@@ -26,20 +27,23 @@ import java.util.*
  */
 class NfcWriteTools(private var coroutineScope: CoroutineScope, private var activity: Activity) :
     NfcWrite {
+    companion object {
+        private const val TAG = "NFCJar"
+    }
+
     private lateinit var pendingIntent: PendingIntent
     private lateinit var intentFilters: Array<IntentFilter>
     private lateinit var teachLis: Array<Array<String>>
 
 
-    override fun ResetCard(intent: Intent, content: Context): Boolean {
+    override fun resetCard(intent: Intent, content: Context): Boolean {
         var isresult = false
-        var blockIndex: Int = 0
+        var blockIndex = 0
         val lastSectorTrailer = byteArrayOf(
             -1, -1, -1, -1, -1, -1,
             -1, 7, -128, -68, -1, -1, -1, -1, -1, -1
         )
-        val emptyBlock =
-            byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        val emptyBlock = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         val normalSectorTrailer = byteArrayOf(
             -1, -1, -1, -1, -1, -1,
             -1, 7, -128, 105, -1, -1, -1, -1, -1, -1
@@ -54,40 +58,27 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
                         var isAuthenticated = false
                         if (mifare.authenticateSectorWithKeyA(i, MifareClassic.KEY_DEFAULT)) {
                             isAuthenticated = true
-                            Log.e("验证成功", "KEY_DEFAULT $i")
-                        } else if (mifare.authenticateSectorWithKeyA(i,
-                                MifareClassic.KEY_NFC_FORUM)
-                        ) {
+                            Log.e(TAG, "KEY_DEFAULT $i")
+                        } else if (mifare.authenticateSectorWithKeyA(i, MifareClassic.KEY_NFC_FORUM)) {
                             isAuthenticated = true
-                            Log.e("验证成功", "KEY_NFC_FORUM $i")
-                        } else if (mifare.authenticateSectorWithKeyA(
-                                i,
-                                MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY
-                            )
-                        ) {
+                            Log.e(TAG, "KEY_NFC_FORUM $i")
+                        } else if (mifare.authenticateSectorWithKeyA(i, MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY)) {
                             isAuthenticated = true
-                            Log.e("验证成功", "KEY_MIFARE_APPLICATION_DIRECTORY $i")
+                            Log.e(TAG, "KEY_MIFARE_APPLICATION_DIRECTORY $i")
                         } else {
-                            Log.e("验证失败", "")
+                            Log.e(TAG, "")
                         }
                         if (mifare.authenticateSectorWithKeyB(i, MifareClassic.KEY_DEFAULT)) {
-
                             isAuthenticated = true
-                            Log.e("验证成功", "KEY_DEFAULT $i")
-                        } else if (mifare.authenticateSectorWithKeyB(i,
-                                MifareClassic.KEY_NFC_FORUM)
-                        ) {
+                            Log.e(TAG, "KEY_DEFAULT $i")
+                        } else if (mifare.authenticateSectorWithKeyB(i, MifareClassic.KEY_NFC_FORUM)) {
                             isAuthenticated = true
-                            Log.e("验证成功", "KEY_NFC_FORUM $i")
-                        } else if (mifare.authenticateSectorWithKeyB(
-                                i,
-                                MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY
-                            )
-                        ) {
+                            Log.e(TAG, "KEY_NFC_FORUM $i")
+                        } else if (mifare.authenticateSectorWithKeyB(i, MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY)) {
                             isAuthenticated = true
-                            Log.e("验证成功", "KEY_MIFARE_APPLICATION_DIRECTORY $i")
+                            Log.e(TAG, "KEY_MIFARE_APPLICATION_DIRECTORY $i")
                         } else {
-                            Log.e("验证失败", "")
+                            Log.e(TAG, "")
                         }
 
                         if (isAuthenticated) {
@@ -114,41 +105,33 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
 
 
                             }
-                            Log.e("结束", ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-
+                            Log.e(TAG, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
                         } else {
                             coroutineScope.launch(Dispatchers.Main) {
-                                Toast.makeText(content,
-                                    "卡已被加密，无法格式化",
-                                    Toast.LENGTH_LONG).show()
+                                Toast.makeText(content, "卡已被加密，无法格式化", Toast.LENGTH_LONG).show()
                             }
-
                         }
                     }
                     mifare.close()
                     isresult = true
                 } else {
                     coroutineScope.launch(Dispatchers.Main) {
-                        Toast.makeText(content,
-                            "当前卡片内存无法进行格式化,当前卡内存:${MifareClassic.SIZE_4K}KB",
-                            Toast.LENGTH_LONG).show()
+                        Toast.makeText(content, "当前卡片内存无法进行格式化,当前卡内存:${MifareClassic.SIZE_4K}KB", Toast.LENGTH_LONG).show()
                     }
 
 
                 }
             } else {
                 coroutineScope.launch(Dispatchers.Main) {
-                    Toast.makeText(content,
-                        "当前卡片为只读，无法格式化",
-                        Toast.LENGTH_LONG).show()
+                    Toast.makeText(content, "当前卡片为只读，无法格式化", Toast.LENGTH_LONG).show()
                 }
 
 
             }
         } catch (e: Exception) {
             mifare.close()
-            Log.e(javaClass.name, e.message.toString())
+            Log.e(TAG, e.message.toString())
 
             return false
         }
@@ -157,7 +140,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
 
     }
 
-    override fun WriteCard(tag: Tag, ndefRecord: NdefRecord): Boolean {
+    override fun writeCard(tag: Tag, ndefRecord: NdefRecord): Boolean {
         try {
 
             val ndefRecoard: Array<NdefRecord> = arrayOf(ndefRecord)
@@ -176,7 +159,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
                     return if (ndef.maxSize > ndefMessage.toByteArray().size) {
 
                         ndef.connect()//连接
-                        EraseNdef(ndef)
+                        eraseNdef(ndef)
                         ndef.writeNdefMessage(ndefMessage)
                         ndef.close()
                         true
@@ -205,7 +188,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
         return false
     }
 
-    override fun TypeUrl(uri: String): NdefRecord {
+    override fun typeUrl(uri: String): NdefRecord {
         var uriStr: String? = null
         var prefix: Byte? = null
         for ((key, item) in UriPrefix.URI_PREFIX_MAP) {
@@ -228,7 +211,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
 
     }
 
-    override fun TypeText(text: String): NdefRecord {
+    override fun typeText(text: String): NdefRecord {
 
         val langBytes = Locale.CHINA.language.toByteArray(Charset.forName("US-ASCII"))
         val utfEncoding = Charset.forName("UTF-8")
@@ -260,7 +243,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
 
     }
 
-    override fun TypeVcard(
+    override fun typeVcard(
         name: String,
         phoneNumber: String,
         email: String,
@@ -283,27 +266,32 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
         val vCardDataBytes = msg.toByteArray(Charset.forName("UTF-8"))
         val vCardPlayLoad = ByteArray(vCardDataBytes.size + 1)
         System.arraycopy(vCardDataBytes, 0, vCardPlayLoad, 1, vCardDataBytes.size)
-        return NdefRecord(NdefRecord.TNF_MIME_MEDIA,
-            "text/vcard".toByteArray(), ByteArray(0), vCardPlayLoad)
+        return NdefRecord(
+            NdefRecord.TNF_MIME_MEDIA,
+            "text/vcard".toByteArray(), ByteArray(0), vCardPlayLoad
+        )
     }
 
-    override fun TypeOpenApp(packName: String): NdefRecord {
+    override fun typeOpenApp(packName: String): NdefRecord {
         return NdefRecord.createApplicationRecord(packName)
     }
 
     @SuppressLint("InlinedApi")
     override fun init(activity: Activity) {
 
-        pendingIntent = PendingIntent.getActivity(activity,
+        pendingIntent = PendingIntent.getActivity(
+            activity,
             0,
             Intent(activity, activity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_MUTABLE)
+            PendingIntent.FLAG_MUTABLE
+        )
         val tech = IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)
         val ndef = IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED)
         val tag = IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED)
         tag.addCategory(Intent.CATEGORY_DEFAULT)
         intentFilters = arrayOf(tech, ndef, tag)
-        teachLis = arrayOf(arrayOf(MifareClassic::class.java.name),
+        teachLis = arrayOf(
+            arrayOf(MifareClassic::class.java.name),
             arrayOf(NfcA::class.java.name),
             arrayOf(IsoDep::class.java.name),
             arrayOf(NfcB::class.java.name),
@@ -311,7 +299,8 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
             arrayOf(NfcV::class.java.name),
             arrayOf(Ndef::class.java.name),
             arrayOf(NdefFormatable::class.java.name),
-            arrayOf(MifareUltralight::class.java.name))// 允许扫描的标签类型
+            arrayOf(MifareUltralight::class.java.name)
+        )// 允许扫描的标签类型
 
 
     }
@@ -336,16 +325,13 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
         return teachLis
     }
 
-    override fun setTeachList(teachs: Array<Array<String>>) {
-        this.teachLis = teachs
+    override fun setTeachList(teaches: Array<Array<String>>) {
+        this.teachLis = teaches
     }
 
-    override fun ReadCardUID(intent: Intent): String? {
-
+    override fun readCardUID(intent: Intent): String? {
         val formatter = SimpleDateFormat("yyyy-MM-dd-HH:mm:ss")
         val curdate = Date(System.currentTimeMillis())
-
-
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
         val bytes = tag?.id
         val stringBuilder = StringBuilder()
@@ -363,11 +349,159 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
         return stringBuilder.toString()
     }
 
-    override fun EraseNdef(ndef: Ndef) {
+
+    override fun readCardContent(intent: Intent): String? {
+        intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)?.let { tag ->
+            val techList = tag.techList
+            Log.d(TAG, "检测到 NFC 设备，支持的协议：${techList.joinToString()}")
+            return readNdef(tag)
+        }
+        return null
+    }
+
+    override fun eraseNdef(ndef: Ndef) {
         val byte = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         val emptyrecord = NdefRecord(NdefRecord.TNF_EMPTY, null, null, null)
         val emptyArray = arrayOf(emptyrecord)
         val emptyMsg = NdefMessage(emptyArray)
         ndef.writeNdefMessage(emptyMsg)
     }
+
+
+    private fun readNfcA(tag: Tag) {
+        val nfcA = NfcA.get(tag)
+        nfcA.use {
+            it.connect()
+            val atqa = it.atqa.joinToString("") { byte -> "%02X".format(byte) }
+            val sak = it.sak
+            Log.d(TAG, "NFC-A 读取成功，ATQA: $atqa, SAK: $sak")
+        }
+    }
+
+    private fun readNfcB(tag: Tag) {
+        val nfcB = NfcB.get(tag)
+        nfcB.use {
+            it.connect()
+            val applicationData = it.applicationData?.joinToString("") { byte -> "%02X".format(byte) }
+            val protocolInfo = it.protocolInfo?.joinToString("") { byte -> "%02X".format(byte) }
+            Log.d(TAG, "NFC-B 读取成功，ApplicationData: $applicationData, ProtocolInfo: $protocolInfo")
+        }
+    }
+
+    private fun readNfcF(tag: Tag) {
+        val nfcF = NfcF.get(tag)
+        nfcF.use {
+            it.connect()
+            val manufacturer = it.manufacturer?.joinToString("") { byte -> "%02X".format(byte) }
+            Log.d("NFC", "NFC-F 读取成功，Manufacturer: $manufacturer")
+        }
+    }
+
+    private fun readNfcV(tag: Tag) {
+        val nfcV = NfcV.get(tag)
+        nfcV.use {
+            it.connect()
+            val dsfid = nfcV.dsfId.toInt() // 数据存储格式标识符
+            val responseFlags = nfcV.responseFlags.toInt() // 响应标志位
+            val uid = nfcV.tag.id.joinToString("") { byte -> "%02X".format(byte) }
+
+            Log.d(TAG, "NfcV 读取成功")
+            Log.d(TAG, "UID: $uid")
+            Log.d(TAG, "DSFID: $dsfid")
+            Log.d(TAG, "Response Flags: $responseFlags")
+        }
+    }
+
+    private fun readIsoDep(tag: Tag) {
+        val isoDep = IsoDep.get(tag)
+        isoDep.use {
+            it.connect()
+            val selectCommand = byteArrayOf(
+                0x00.toByte(),
+                0xA4.toByte(),
+                0x04.toByte(),
+                0x00.toByte(),
+                0x07.toByte(),
+                0xA0.toByte(),
+                0x00.toByte(),
+                0x00.toByte(),
+                0x03.toByte(),
+                0x86.toByte(),
+                0x98.toByte(),
+                0x07.toByte()
+            )
+            val response = it.transceive(selectCommand)
+            Log.d(TAG, "ISO-DEP 读取成功，返回数据: ${response.joinToString("") { byte -> "%02X".format(byte) }}")
+        }
+    }
+
+    private fun readNdef(tag: Tag): String {
+        val ndef = Ndef.get(tag)
+        val builder = StringBuilder()
+        ndef?.use {
+            it.connect()
+            val ndefMessage = it.cachedNdefMessage
+            ndefMessage?.records?.let { records ->
+                records.forEach { record ->
+                    // 读取文本记录 (RTD_TEXT)
+                    if (record.tnf == NdefRecord.TNF_WELL_KNOWN && record.type.contentEquals(NdefRecord.RTD_TEXT)) {
+                        val payload = record.payload
+                        val languageCodeLength = payload[0].toInt() // 第一个字节表示语言代码长度
+                        val languageCode = String(payload, 1, languageCodeLength, Charsets.US_ASCII) // 获取语言代码
+                        val text = String(payload, languageCodeLength + 1, payload.size - languageCodeLength - 1, Charsets.UTF_8) // 获取文本内容
+                        Log.d(TAG, "NDEF Text记录，语言代码: $languageCode, 内容: $text")
+                        builder.append(text)
+                    }
+
+                    // 读取 URL 记录 (RTD_URI)
+                    else if (record.tnf == NdefRecord.TNF_WELL_KNOWN && record.type.contentEquals(NdefRecord.RTD_URI)) {
+                        val payload = record.payload
+                        val url = String(payload, Charsets.UTF_8)
+                        Log.d(TAG, "NDEF URL记录，内容: $url")
+                        builder.append(url)
+                    }
+
+                    // 读取 MIME 类型记录
+                    else if (record.tnf == NdefRecord.TNF_MIME_MEDIA && record.type.contentEquals("application/json".toByteArray())) {
+                        val payload = record.payload
+                        val jsonString = String(payload, Charsets.UTF_8)
+                        Log.d(TAG, "NDEF MIME记录，内容: $jsonString")
+                        builder.append(jsonString)
+                    }
+
+                    // 读取其他自定义数据记录
+                    else {
+                        val payload = record.payload
+                        val customData = String(payload, Charsets.UTF_8)
+                        Log.d(TAG, "自定义数据记录，内容: $customData")
+                        builder.append(customData)
+                    }
+                }
+            }
+        } ?: Log.e(TAG, "NDEF 读取失败")
+        return builder.toString()
+    }
+
+    private fun readMifareClassic(tag: Tag) {
+        val mifare = MifareClassic.get(tag)
+        mifare.use {
+            it.connect()
+            if (it.authenticateSectorWithKeyA(0, MifareClassic.KEY_DEFAULT)) {
+                val data = it.readBlock(0)
+                val cardInfo = String(data, Charsets.UTF_8)
+                Log.d(TAG, "Mifare Classic 读取成功，数据: $cardInfo")
+            }
+        }
+    }
+
+    private fun readMifareUltralight(tag: Tag) {
+        val mifareUl = MifareUltralight.get(tag)
+        mifareUl.use {
+            it.connect()
+            val page0 = it.readPages(0)
+            Log.d(TAG, "Mifare Ultralight 读取成功，Page 0: ${page0.joinToString("") { byte -> "%02X".format(byte) }}")
+        }
+    }
+
+
 }

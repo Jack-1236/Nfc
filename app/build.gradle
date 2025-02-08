@@ -1,14 +1,13 @@
+
+
 plugins {
-//    id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
    id 'com.android.library' //todo 包模式
 }
 
 android {
     compileSdk 32
-
     defaultConfig {
-//        applicationId "com.example.nfctools"
         minSdk 24
         targetSdk 32
         versionCode 1
@@ -27,9 +26,21 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+
+    libraryVariants.configureEach { variant ->
+        variant.outputs.all { output ->
+            if (output.outputFileName.endsWith(".aar")) {
+                output.outputFileName ="nfc.aar"
+            }
+        }
+    }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+
+
 }
 
 dependencies {
