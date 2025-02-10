@@ -12,11 +12,6 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.*
 import android.util.Log
-import android.widget.Toast
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,8 +20,7 @@ import java.util.*
  *   created by sunLook
  *   time       2022/6/17
  */
-class NfcWriteTools(private var coroutineScope: CoroutineScope, private var activity: Activity) :
-    NfcWrite {
+class NfcWriteTools : NfcWrite {
     companion object {
         private const val TAG = "NFCJar"
     }
@@ -36,7 +30,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
     private lateinit var teachLis: Array<Array<String>>
 
 
-    override fun resetCard(intent: Intent, content: Context): Boolean {
+    override fun resetCard(intent: Intent): Boolean {
         var isresult = false
         var blockIndex = 0
         val lastSectorTrailer = byteArrayOf(
@@ -108,26 +102,16 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
                             Log.e(TAG, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
                         } else {
-                            coroutineScope.launch(Dispatchers.Main) {
-                                Toast.makeText(content, "卡已被加密，无法格式化", Toast.LENGTH_LONG).show()
-                            }
+                            Log.d(TAG, "卡已被加密，无法格式化")
                         }
                     }
                     mifare.close()
                     isresult = true
                 } else {
-                    coroutineScope.launch(Dispatchers.Main) {
-                        Toast.makeText(content, "当前卡片内存无法进行格式化,当前卡内存:${MifareClassic.SIZE_4K}KB", Toast.LENGTH_LONG).show()
-                    }
-
-
+                    Log.d(TAG, "当前卡片内存无法进行格式化,当前卡内存:${MifareClassic.SIZE_4K}KB")
                 }
             } else {
-                coroutineScope.launch(Dispatchers.Main) {
-                    Toast.makeText(content, "当前卡片为只读，无法格式化", Toast.LENGTH_LONG).show()
-                }
-
-
+                Log.d(TAG, "当前卡片为只读，无法格式化")
             }
         } catch (e: Exception) {
             mifare.close()
@@ -151,9 +135,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
 
             if (ndef != null) {
                 if (!ndef.isWritable) {
-                    coroutineScope.launch(Dispatchers.Main) {
-                        Toast.makeText(activity, "当前NFC卡为只读卡", Toast.LENGTH_LONG).show()
-                    }
+                    Log.d(TAG, "当前NFC卡为只读卡")
                     return false
                 } else {
                     return if (ndef.maxSize > ndefMessage.toByteArray().size) {
@@ -164,10 +146,7 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
                         ndef.close()
                         true
                     } else {
-                        coroutineScope.launch(Dispatchers.Main) {
-                            Toast.makeText(activity, "数据过大无法写入", Toast.LENGTH_LONG).show()
-                        }
-
+                        Log.d(TAG, "数据过大无法写入")
                         false
                     }
                 }
@@ -277,12 +256,11 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
     }
 
     @SuppressLint("InlinedApi")
-    override fun init(activity: Activity) {
-
+    override fun init(context: Context) {
         pendingIntent = PendingIntent.getActivity(
-            activity,
+            context,
             0,
-            Intent(activity, activity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            Intent(context, context::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_MUTABLE
         )
         val tech = IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED)
@@ -330,23 +308,20 @@ class NfcWriteTools(private var coroutineScope: CoroutineScope, private var acti
     }
 
     override fun readCardUID(intent: Intent): String? {
-        val formatter = SimpleDateFormat("yyyy-MM-dd-HH:mm:ss")
-        val curdate = Date(System.currentTimeMillis())
         val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
         val bytes = tag?.id
         val stringBuilder = StringBuilder()
-        if (bytes == null || bytes.size <= 0) {
+        if (bytes == null || bytes.isEmpty()) {
             return null
         }
-        val buffer: CharArray = CharArray(2)
+        val buffer = CharArray(2)
         for ((i, item) in bytes.withIndex()) {
-            buffer[0] = Character.forDigit(bytes.get(i).toInt() ushr 4 and 0x0F, 16)
-
-            buffer[1] = Character.forDigit(bytes.get(i).toInt() and 0x0F, 16)
+            buffer[0] = Character.forDigit(bytes[i].toInt() ushr 4 and 0x0F, 16)
+            buffer[1] = Character.forDigit(bytes[i].toInt() and 0x0F, 16)
             stringBuilder.append(buffer)
         }
 
-        return stringBuilder.toString()
+        return stringBuilder.toString().uppercase(Locale.ROOT)
     }
 
 

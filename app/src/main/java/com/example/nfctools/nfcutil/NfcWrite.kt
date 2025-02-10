@@ -16,7 +16,7 @@ import android.nfc.tech.Ndef
 interface NfcWrite {
 
     //重置nfc卡片，恢复出厂格式
-    fun resetCard(intent: Intent, content: Context): Boolean
+    fun resetCard(intent: Intent ): Boolean
 
     //写入数据
     fun writeCard(tag: Tag, ndefRecord: NdefRecord): Boolean
@@ -45,7 +45,7 @@ interface NfcWrite {
     fun typeOpenApp(packName: String): NdefRecord
 
     //初始化
-    fun init(activity: Activity)
+    fun init(context: Context)
 
 
     fun getPendingIntent(): PendingIntent
